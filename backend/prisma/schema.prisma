@@ -1,0 +1,78 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Usuario {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  senha     String
+  nome      String
+  role      String   @default("paciente") // paciente, medico, admin
+  ativo     Boolean  @default(true)
+  criadoEm  DateTime @default(now())
+  atualizadoEm DateTime @updatedAt
+
+  paciente  Paciente?
+  @@map("Usuario")
+}
+
+model Paciente {
+  id               String   @id @default(uuid())
+  usuarioId        String   @unique
+  usuario          Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  nome             String
+  dataNascimento   DateTime
+  cpf              String   @unique
+  email            String   @unique
+  telefone         String?
+  endereco         String?
+  cidade           String?
+  estado           String?
+  cep              String?
+  criadoEm         DateTime @default(now())
+  atualizadoEm     DateTime @updatedAt
+
+  exames           Exame[]
+  @@map("Paciente")
+}
+
+model Exame {
+  id           String   @id @default(uuid())
+  pacienteId   String
+  paciente     Paciente @relation(fields: [pacienteId], references: [id], onDelete: Cascade)
+  tipoExame    String   // Sangue, Urina, Imagem, etc
+  dataExame    DateTime
+  laboratorio  String
+  status       String   @default("pendente") // pendente, em_progresso, completo, cancelado
+  notas        String?
+  criadoEm     DateTime @default(now())
+  atualizadoEm DateTime @updatedAt
+
+  resultados   Resultado[]
+  @@map("Exame")
+}
+
+model Resultado {
+  id        String   @id @default(uuid())
+  exameId   String
+  exame     Exame    @relation(fields: [exameId], references: [id], onDelete: Cascade)
+  nome      String   // Hemoglobina, Glicose, etc
+  valor     Float
+  unidade   String   // g/dL, mg/dL, etc
+  minimo    Float
+  maximo    Float
+  status    String   @default("normal") // normal, baixo, alto
+  notas     String?
+  criadoEm  DateTime @default(now())
+  atualizadoEm DateTime @updatedAt
+
+  @@map("Resultado")
+}
